@@ -51,3 +51,69 @@ test('a value is laid out across the segments', () => {
         .map((segment) => segment.textContent);
     expect(texts).toEqual(['15', '07', '2026']);
 });
+
+test('a user onFocus on Segment does not overwrite the react-aria handlers', async () => {
+    const onFocus = jest.fn();
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+        <I18nProvider locale={'fr-FR'}>
+            <DateField.Root aria-label={'Date'} onChange={onChange}>
+                <DateField.Segments>
+                    {(segment) => (
+                        <DateField.Segment
+                            segment={segment}
+                            onFocus={onFocus}
+                        />
+                    )}
+                </DateField.Segments>
+            </DateField.Root>
+        </I18nProvider>,
+    );
+
+    await user.click(screen.getAllByRole('spinbutton')[0]);
+    expect(onFocus).toHaveBeenCalled();
+
+    await user.keyboard('15072026');
+    expect(onChange).toHaveBeenCalledWith(new CalendarDate(2026, 7, 15));
+});
+
+// A spread on top (`{...segmentProps} {...spanProps}`) would pass the previous test: the span
+// would in both cases get only the user onFocus, while the DOM focus event itself
+// still fires. The real regression shows up in digit accumulation: the internal
+// onFocus resets the react-aria buffer when a segment is refocused - without mergeProps
+// the user onFocus fully replaces the internal one, the buffer is not reset, and
+// the previously typed digit "sticks" to the new one.
+test('refocusing a segment with a user onFocus resets the react-aria input buffer', async () => {
+    const onFocus = jest.fn();
+    const user = userEvent.setup();
+    render(
+        <I18nProvider locale={'fr-FR'}>
+            <DateField.Root aria-label={'Date'}>
+                <DateField.Segments>
+                    {(segment) =>
+                        segment.type === 'day' ? (
+                            <DateField.Segment
+                                segment={segment}
+                                onFocus={onFocus}
+                            />
+                        ) : (
+                            <DateField.Segment segment={segment} />
+                        )
+                    }
+                </DateField.Segments>
+            </DateField.Root>
+        </I18nProvider>,
+    );
+
+    const segments = screen.getAllByRole('spinbutton');
+    const day = segments[0];
+    await user.click(day);
+    await user.keyboard('1');
+    await user.click(segments[1]);
+    await user.click(day);
+    await user.keyboard('2');
+
+    expect(onFocus).toHaveBeenCalled();
+    expect(day.textContent).toBe('02');
+});

@@ -5,6 +5,7 @@
 // of states for the consumer to style.
 import {useDateField, useDateSegment} from '@react-aria/datepicker';
 import {useLocale} from '@react-aria/i18n';
+import {mergeProps} from '@react-aria/utils';
 import {useDateFieldState} from '@react-stately/datepicker';
 
 import type {
@@ -98,9 +99,10 @@ const Segment = (props: DateFieldSegmentProps): React.ReactElement => {
     const {segmentProps} = useDateSegment(segment, state, ref);
 
     return (
+        // mergeProps, not a spread on top: user onFocus/onKeyDown
+        // chain onto the react-aria handlers instead of overwriting them.
         <span
-            {...segmentProps}
-            {...spanProps}
+            {...mergeProps(segmentProps, spanProps)}
             ref={ref}
             data-segment={segment.type}
             data-placeholder={segment.isPlaceholder || undefined}
