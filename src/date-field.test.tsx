@@ -27,6 +27,19 @@ test('renders three editable segments (dd.MM.yyyy for fr-FR)', () => {
     expect(screen.getAllByRole('spinbutton')).toHaveLength(3);
 });
 
+// Pin test for the DOM contract: the skin (date-picker.module.scss) targets
+// the segment aria-disabled, not a data-disabled of its own - react-aria does
+// not set it. useSpinButton provides that attribute natively; the regression is losing
+// the disabled visual style, without a single TS/lint failure.
+test('a disabled field marks every segment aria-disabled', () => {
+    renderField({isDisabled: true});
+    const segments = screen.getAllByRole('spinbutton');
+    expect(segments.length).toBeGreaterThan(0);
+    segments.forEach((segment) => {
+        expect(segment.getAttribute('aria-disabled')).toBe('true');
+    });
+});
+
 test('empty segments are marked data-placeholder', () => {
     renderField();
     const segments = screen.getAllByRole('spinbutton');
