@@ -1,8 +1,9 @@
 // Created by: Andrey Polyakov (andrey@polyakov.im)
-import {expect, test} from '@jest/globals';
+import {expect, jest, test} from '@jest/globals';
 import {CalendarDate} from '@internationalized/date';
 import {I18nProvider} from '@react-aria/i18n';
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import React from 'react';
 
@@ -69,4 +70,53 @@ test('range: selection edges are marked data-selection-start/end', () => {
     expect(
         document.querySelector('[data-selection-end="true"]')?.textContent,
     ).toBe('20');
+});
+
+// Regression: the production bug "the range commits itself while paging through
+// months" (see the commit history) - the cause is that focus falling into body
+// (nav button disabling, cell unmounting) is indistinguishable by standard
+// means from an ordinary focus move out of the calendar. The filter in
+// RangeCalendar.Root (event.relatedTarget == null -> ignored) is the only
+// guard, and this test covers both branches.
+test('range: focus falling into body does not commit an unfinished range, an ordinary blur does', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+        <I18nProvider locale={'fr-FR'}>
+            <div>
+                <RangeCalendar.Root
+                    aria-label={'Period'}
+                    defaultFocusedValue={new CalendarDate(2026, 7, 15)}
+                    onChange={onChange}
+                >
+                    <Calendar.Grid weekdayStyle={'short'} />
+                </RangeCalendar.Root>
+                <button type={'button'}>outside calendar</button>
+            </div>
+        </I18nProvider>,
+    );
+
+    // The "10" cell inside the visible month - not to be confused with the same-named cell
+    // from an adjacent month in the grid padding (outside-month).
+    const day10 = screen
+        .getAllByText('10')
+        .find((cell) => cell.getAttribute('data-outside-month') == null);
+    if (day10 == null) {
+        throw new Error('the "10" cell was not found in the visible month');
+    }
+
+    await user.click(day10);
+    expect(onChange).not.toHaveBeenCalled();
+
+    const root = screen.getByRole('application');
+
+    // Focus falling into body: preact/compat translates onBlur into a native bubbling
+    // focusout (see node_modules/preact/compat/src/render.js), so
+    // fireEvent.focusOut on the root is the exact equivalent of real focus loss.
+    fireEvent.focusOut(root, {relatedTarget: null});
+    expect(onChange).not.toHaveBeenCalled();
+
+    const outsideButton = screen.getByRole('button', {name: 'outside calendar'});
+    fireEvent.focusOut(root, {relatedTarget: outsideButton});
+    expect(onChange).toHaveBeenCalledTimes(1);
 });
