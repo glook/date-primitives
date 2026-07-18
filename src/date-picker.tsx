@@ -42,7 +42,13 @@ export interface DatePickerRootProps extends AriaDatePickerProps<DateValue> {
 
 const Root = (props: DatePickerRootProps): React.ReactElement => {
     const {children, ...pickerProps} = props;
-    const groupRef = React.useRef<HTMLDivElement>(null);
+    // Non-null assertion: the consumer attaches this ref to the element
+    // carrying groupProps and only reads .current post-mount. Keeps the
+    // return type a plain RefObject<HTMLDivElement> across @types/react
+    // 17/18/19 - without it, @types/react 19's useRef(null) overload
+    // resolves to RefObject<T | null>, which the ref JSX attribute under
+    // @types/react 18 then rejects.
+    const groupRef = React.useRef<HTMLDivElement>(null!);
     const state = useDatePickerState(pickerProps);
     const picker = useDatePicker(pickerProps, state, groupRef);
 

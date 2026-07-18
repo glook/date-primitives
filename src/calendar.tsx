@@ -62,7 +62,11 @@ const Root = (props: CalendarRootProps): React.ReactElement => {
         ...calendarProps
     } = props;
     const {locale} = useLocale();
-    const rootRef = React.useRef<HTMLDivElement>(null);
+    // Non-null assertion: the ref attaches to the div below in the same render,
+    // consumers only read .current post-mount. Keeps the return type a plain
+    // RefObject<HTMLDivElement> across @types/react 17/18/19 - without it,
+    // @types/react 19's useRef(null) overload resolves to RefObject<T | null>.
+    const rootRef = React.useRef<HTMLDivElement>(null!);
     const state = useCalendarState({...calendarProps, locale, createCalendar});
     const calendar = useCalendar(calendarProps, state);
 
@@ -93,7 +97,8 @@ const RangeRoot = (props: RangeCalendarRootProps): React.ReactElement => {
         ...calendarProps
     } = props;
     const {locale} = useLocale();
-    const rootRef = React.useRef<HTMLDivElement>(null);
+    // See the non-null assertion comment in Root above.
+    const rootRef = React.useRef<HTMLDivElement>(null!);
     const state = useRangeCalendarState({
         ...calendarProps,
         locale,
@@ -237,7 +242,7 @@ export interface CalendarCellProps {
 const Cell = (props: CalendarCellProps): React.ReactElement => {
     const {date, className} = props;
     const {state} = useCalendarContext();
-    const ref = React.useRef<HTMLDivElement>(null);
+    const ref = React.useRef<HTMLDivElement>(null!);
     const {
         cellProps,
         buttonProps,

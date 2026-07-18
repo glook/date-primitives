@@ -8,7 +8,7 @@ No styles, no strings, no popup. You get structure, ARIA wiring and `data-*` sta
 npm install @glook/date-primitives
 ```
 
-Peer deps: `react ^17.0.2`.
+Peer deps: `react ^17.0.2 || ^18 || ^19`. Every major is covered by the CI test matrix.
 
 ## Usage
 

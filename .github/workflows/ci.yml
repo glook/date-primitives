@@ -16,8 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        react: [17, 18, 19]
     steps:
       - uses: actions/checkout@v5
 
@@ -28,8 +32,32 @@ jobs:
 
       - run: npm ci
 
+      # package.json pins the React 19 dev stack (npm ci above already installs
+      # it); older majors are swapped in without touching the lockfile. React 17
+      # additionally needs @testing-library/react@12 - React 18 and 19 share
+      # @testing-library/react@16 (see ADR-0007).
+      - name: Install React 17
+        if: matrix.react == 17
+        run: npm install --no-save react@17 react-dom@17 @types/react@17 @testing-library/react@12
+
+      - name: Install React 18
+        if: matrix.react == 18
+        run: npm install --no-save react@18 react-dom@18 @types/react@18
+
       - run: npm run typecheck
 
       - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
 
       - run: npm run build

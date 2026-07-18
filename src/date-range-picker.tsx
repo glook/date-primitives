@@ -50,7 +50,8 @@ export interface DateRangePickerRootProps
 
 const Root = (props: DateRangePickerRootProps): React.ReactElement => {
     const {children, ...pickerProps} = props;
-    const groupRef = React.useRef<HTMLDivElement>(null);
+    // See the non-null assertion comment in date-picker.tsx Root.
+    const groupRef = React.useRef<HTMLDivElement>(null!);
     const state = useDateRangePickerState(pickerProps);
     const picker = useDateRangePicker(pickerProps, state, groupRef);
 
