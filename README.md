@@ -4,6 +4,8 @@ Headless date and calendar primitives built on [react-aria](https://react-spectr
 
 No styles, no strings, no popup. You get structure, ARIA wiring and `data-*` state attributes; the markup and the appearance stay yours.
 
+**[Live demo](https://glook.github.io/date-primitives/)** — a Storybook sandbox whose skin is attached entirely through the `data-*` attributes documented below.
+
 ```bash
 npm install @glook/date-primitives
 ```
