@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      release_as:
+        description: 'Optional version override, for example 1.0.0'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify release branch
+        if: ${{ github.ref_name != 'master' }}
+        run: |
+          echo "Release workflow must be run from master, got '${{ github.ref_name }}'."
+          exit 1
+
+      - uses: actions/checkout@v5
+
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          target-branch: master
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          release-as: ${{ inputs.release_as }}
+
+      # Everything below runs only on the push that merges the release PR.
+      - uses: actions/setup-node@v4
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+
+      - if: ${{ steps.release.outputs.release_created }}
+        run: npm ci
+
+      - if: ${{ steps.release.outputs.release_created }}
+        run: npm run typecheck
+
+      - if: ${{ steps.release.outputs.release_created }}
+        run: npm test
+
+      - if: ${{ steps.release.outputs.release_created }}
+        run: npm run build
+
+      # Trusted publishing needs npm >= 11.5.1; the npm bundled with Node is not guaranteed to be new enough.
+      - if: ${{ steps.release.outputs.release_created }}
+        run: npm install -g npm@latest
+
+      # Auth goes through OIDC (permissions.id-token: write), no NPM_TOKEN.
+      # The trusted publisher on npmjs.com is bound to this file name: release.yml
+      - if: ${{ steps.release.outputs.release_created }}
+        run: npm publish --access public
