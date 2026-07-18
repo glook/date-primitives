@@ -1,0 +1,201 @@
+/*
+ * Created by: Andrey Polyakov (andrey@polyakov.im)
+ *
+ * Demo styles for Storybook stories, not part of the package. The primitives ship
+ * unstyled - this file shows how to hang an appearance on their data-attributes.
+ *
+ * Note what disabled state is selected by: segments expose aria-disabled and nav
+ * buttons expose the native :disabled attribute. Neither emits data-disabled - a
+ * skin copied from react-aria-components selectors would silently lose them.
+ */
+
+.DemoRoot {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    color: #1f2933;
+}
+
+/* DateField ------------------------------------------------------------- */
+
+.DemoField {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    padding: 6px 10px;
+    border: 1px solid #cbd2d9;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.DemoField:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.DemoSegment {
+    padding: 0 2px;
+    border-radius: 3px;
+    outline: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.DemoSegment:focus {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.DemoSegment[data-placeholder] {
+    color: #9aa5b1;
+}
+
+.DemoSegment[data-segment='literal'] {
+    color: #9aa5b1;
+    padding: 0;
+}
+
+.DemoSegment[aria-disabled='true'] {
+    color: #cbd2d9;
+}
+
+/* Calendar -------------------------------------------------------------- */
+
+.DemoCalendar {
+    display: inline-block;
+    padding: 12px;
+    border: 1px solid #cbd2d9;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.DemoCalendarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.DemoHeading {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.DemoNav {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #cbd2d9;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.DemoNav:hover {
+    background: #f5f7fa;
+}
+
+.DemoNav:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.DemoGrid {
+    border-collapse: collapse;
+}
+
+.DemoWeekday {
+    width: 34px;
+    padding: 4px 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #9aa5b1;
+}
+
+.DemoCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 1px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+}
+
+.DemoCell:hover {
+    background: #f5f7fa;
+}
+
+.DemoCell:focus-visible {
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.DemoCell[data-selected] {
+    background: #dbeafe;
+}
+
+.DemoCell[data-selection-start],
+.DemoCell[data-selection-end] {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.DemoCell[data-outside-month] {
+    color: #cbd2d9;
+}
+
+.DemoCell[data-unavailable] {
+    color: #d64545;
+    text-decoration: line-through;
+    cursor: default;
+}
+
+.DemoCell[data-disabled] {
+    color: #cbd2d9;
+    cursor: default;
+}
+
+/* Pickers --------------------------------------------------------------- */
+
+.DemoPickerWrap {
+    position: relative;
+    display: inline-block;
+}
+
+.DemoGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.DemoTrigger {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #cbd2d9;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.DemoTrigger:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.DemoRangeSeparator {
+    color: #9aa5b1;
+}
+
+/*
+ * The package ships no popup on purpose (ADR-0004): the roots render no DOM and
+ * hand back groupProps/dialogProps, so the overlay is the consumer's call. This
+ * is the cheapest possible one - no positioning library involved.
+ */
+.DemoPopover {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 1;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    border-radius: 8px;
+}
