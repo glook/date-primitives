@@ -1,6 +1,6 @@
 {
     "name": "@glook/date-primitives",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Headless date/calendar primitives over react-aria hooks. Gregorian-only by default, locale-agnostic.",
     "keywords": [
         "react",
