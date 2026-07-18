@@ -11,7 +11,10 @@ import type {
     DateRangePickerAria,
     DateValue,
 } from '@react-aria/datepicker';
-import type {DateRangePickerState} from '@react-stately/datepicker';
+import type {
+    DateRangePickerState,
+    DateRangePickerStateOptions,
+} from '@react-stately/datepicker';
 
 import React from 'react';
 
@@ -35,7 +38,13 @@ export const useDateRangePickerContext = (): DateRangePickerContextValue => {
     return context;
 };
 
-export interface DateRangePickerRootProps extends AriaDateRangePickerProps<DateValue> {
+export interface DateRangePickerRootProps
+    extends
+        AriaDateRangePickerProps<DateValue>,
+        // shouldCloseOnSelect lives only in the state options (react-stately); the aria props
+        // (react-aria) does not have it - useDateRangePickerState accepts it silently, and
+        // without this Pick the consumer could not pass it through Root type-safely.
+        Pick<DateRangePickerStateOptions<DateValue>, 'shouldCloseOnSelect'> {
     children?: React.ReactNode;
 }
 
