@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/glook/date-primitives/compare/v0.1.0...v0.2.0) (2026-07-19)
+
+
+### Features
+
+* add getDateFieldFillState utility ([4a44600](https://github.com/glook/date-primitives/commit/4a44600edb6038a9d9a132f850a37d98dd68d841))
+
 ## 0.1.0 (2026-07-18)
 
 
