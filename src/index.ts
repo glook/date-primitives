@@ -7,6 +7,9 @@ export type {CreateCalendar} from './create-calendar';
 export {DateField, useDateFieldContext} from './date-field';
 export type {DateFieldRootProps, DateFieldSegmentProps} from './date-field';
 
+export {getDateFieldFillState} from './field-fill';
+export type {DateFieldFillState} from './field-fill';
+
 export {Calendar, RangeCalendar, useCalendarContext} from './calendar';
 export type {
     CalendarRootProps,

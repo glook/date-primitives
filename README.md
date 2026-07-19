@@ -79,6 +79,37 @@ const Body = () => {
 
 Bring your own positioning — floating-ui, Base UI, or a plain absolutely positioned `div`. The Storybook stories use the last one.
 
+## Validation and fill state
+
+Validation already lives on the state react-stately hands you — `isInvalid`, plus a native `ValidityState` and localized messages:
+
+```tsx
+const {state} = useDateFieldContext();
+const {rangeUnderflow, rangeOverflow} = state.realtimeValidation.validationDetails;
+```
+
+What it does *not* tell you is whether the user has finished typing. `state.value` is not a substitute: in a controlled field the engine may hand back a best guess with the missing part defaulted while the segment is still a placeholder on screen. Hence one helper:
+
+```tsx
+import {getDateFieldFillState, useDateFieldContext} from '@glook/date-primitives';
+
+const {state} = useDateFieldContext();
+const {isComplete, isEmpty} = getDateFieldFillState(state.segments);
+```
+
+`isComplete` means every editable segment is filled — treating the year as filled only at full width, since a half-typed year is still a valid number. Era-based calendars, where the year is relative and genuinely short, are exempt. Non-editable segments (literals, time zone) are ignored.
+
+## Dates in, dates out
+
+The package speaks `DateValue` from `@internationalized/date`. Converting to and from a native `Date` is two one-liners, and whether "no date" is `null` or `undefined` stays your call:
+
+```ts
+import {fromDate, getLocalTimeZone, toCalendarDate} from '@internationalized/date';
+
+const toCalendar = (date: Date) => toCalendarDate(fromDate(date, getLocalTimeZone()));
+const toNative = (value: CalendarDate) => value.toDate(getLocalTimeZone());
+```
+
 ## Calendar systems
 
 Every root takes a `createCalendar` prop, defaulting to a factory that knows Gregorian and nothing else. That default is what keeps the bundle small: pulling in the full `@internationalized/date` calendar registry would drag every calendar system into every consumer. Need Hebrew or Japanese? Pass your own factory — its weight lands in your bundle, not in the package.
