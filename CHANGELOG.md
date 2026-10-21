@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/glook/date-primitives/compare/v0.2.0...v0.3.0) (2026-10-21)
+
+
+### Features
+
+* accept month and year granularity in field and picker roots ([ce4b3e7](https://github.com/glook/date-primitives/commit/ce4b3e7c065d540614ee096cc82e2fefdbf29c92))
+* add visibleDuration, grid offset and isOutsideMonth for multi-month calendars ([13ece80](https://github.com/glook/date-primitives/commit/13ece80bc24f946b952273770f1164c7a792e7e2))
+
 ## [0.2.0](https://github.com/glook/date-primitives/compare/v0.1.0...v0.2.0) (2026-07-19)
 
 
