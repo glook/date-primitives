@@ -79,6 +79,12 @@ const Body = () => {
 
 Bring your own positioning — floating-ui, Base UI, or a plain absolutely positioned `div`. The Storybook stories use the last one.
 
+## Several months and month/year fields
+
+`Calendar.Root` and `RangeCalendar.Root` take `visibleDuration` (`{months: 2}`) and `pageBehavior` (`'single'` pages by one month). Render one `Calendar.Grid` per visible month with `offset={{months: n}}` and a matching `Calendar.Heading offset`; the days of a neighbour month inside a grid get `data-outside-month` and are not selectable.
+
+`DateField.Root`, `DatePicker.Root` and `DateRangePicker.Root` accept `granularity="month"` or `"year"`: the field renders only the matching segments and the value is the first day of the period. Pass `placeholderValue` so the missing parts have a fixed default.
+
 ## Validation and fill state
 
 Validation already lives on the state react-stately hands you — `isInvalid`, plus a native `ValidityState` and localized messages:

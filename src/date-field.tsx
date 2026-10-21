@@ -22,6 +22,7 @@ import React from 'react';
 
 import {createGregorianCalendar} from './create-calendar';
 import type {CreateCalendar} from './create-calendar';
+import type {DateGranularity} from './granularity';
 
 interface DateFieldContextValue {
     field: DateFieldAria;
@@ -42,7 +43,10 @@ export const useDateFieldContext = (): DateFieldContextValue => {
     return context;
 };
 
-export interface DateFieldRootProps extends AriaDateFieldProps<DateValue> {
+export interface DateFieldRootProps
+    extends Omit<AriaDateFieldProps<DateValue>, 'granularity'> {
+    /** Also accepts 'month' and 'year': the field then has no day segment. */
+    granularity?: DateGranularity;
     className?: string;
     children?: React.ReactNode;
     /** Calendar factory; Gregorian-only by default. */
@@ -54,8 +58,9 @@ const Root = (props: DateFieldRootProps): React.ReactElement => {
         className,
         children,
         createCalendar = createGregorianCalendar,
-        ...fieldProps
+        ...restProps
     } = props;
+    const fieldProps = restProps as AriaDateFieldProps<DateValue>;
     const ref = React.useRef<HTMLDivElement>(null);
     const {locale} = useLocale();
     const state = useDateFieldState({...fieldProps, locale, createCalendar});

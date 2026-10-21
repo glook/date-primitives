@@ -18,6 +18,8 @@ import type {
 
 import React from 'react';
 
+import type {DateGranularity} from './granularity';
+
 interface DateRangePickerContextValue {
     picker: DateRangePickerAria;
     state: DateRangePickerState;
@@ -40,16 +42,19 @@ export const useDateRangePickerContext = (): DateRangePickerContextValue => {
 
 export interface DateRangePickerRootProps
     extends
-        AriaDateRangePickerProps<DateValue>,
+        Omit<AriaDateRangePickerProps<DateValue>, 'granularity'>,
         // shouldCloseOnSelect lives only in the state options (react-stately); the aria props
         // (react-aria) does not have it - useDateRangePickerState accepts it silently, and
         // without this Pick the consumer could not pass it through Root type-safely.
         Pick<DateRangePickerStateOptions<DateValue>, 'shouldCloseOnSelect'> {
+    /** Also accepts 'month' and 'year'. */
+    granularity?: DateGranularity;
     children?: React.ReactNode;
 }
 
 const Root = (props: DateRangePickerRootProps): React.ReactElement => {
-    const {children, ...pickerProps} = props;
+    const {children, ...restProps} = props;
+    const pickerProps = restProps as AriaDateRangePickerProps<DateValue>;
     // See the non-null assertion comment in date-picker.tsx Root.
     const groupRef = React.useRef<HTMLDivElement>(null!);
     const state = useDateRangePickerState(pickerProps);
