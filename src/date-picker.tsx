@@ -14,6 +14,8 @@ import type {DatePickerState} from '@react-stately/datepicker';
 
 import React from 'react';
 
+import type {DateGranularity} from './granularity';
+
 interface DatePickerContextValue {
     picker: DatePickerAria;
     state: DatePickerState;
@@ -36,12 +38,16 @@ export const useDatePickerContext = (): DatePickerContextValue => {
     return context;
 };
 
-export interface DatePickerRootProps extends AriaDatePickerProps<DateValue> {
+export interface DatePickerRootProps
+    extends Omit<AriaDatePickerProps<DateValue>, 'granularity'> {
+    /** Also accepts 'month' and 'year'. */
+    granularity?: DateGranularity;
     children?: React.ReactNode;
 }
 
 const Root = (props: DatePickerRootProps): React.ReactElement => {
-    const {children, ...pickerProps} = props;
+    const {children, ...restProps} = props;
+    const pickerProps = restProps as AriaDatePickerProps<DateValue>;
     // Non-null assertion: the consumer attaches this ref to the element
     // carrying groupProps and only reads .current post-mount. Keeps the
     // return type a plain RefObject<HTMLDivElement> across @types/react

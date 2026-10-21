@@ -25,6 +25,8 @@ export type {DatePickerRootProps} from './date-picker';
 export {DateRangePicker, useDateRangePickerContext} from './date-range-picker';
 export type {DateRangePickerRootProps} from './date-range-picker';
 
+export type {DateGranularity} from './granularity';
+
 // Locale is the consumer's concern: the package does not hardcode it.
 export {I18nProvider, useLocale} from '@react-aria/i18n';
 

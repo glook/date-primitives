@@ -130,3 +130,19 @@ test('refocusing a segment with a user onFocus resets the react-aria input buffe
     expect(onFocus).toHaveBeenCalled();
     expect(day.textContent).toBe('02');
 });
+
+test("granularity 'month' renders month and year segments only", () => {
+    renderField({
+        granularity: 'month',
+        placeholderValue: new CalendarDate(2000, 1, 1),
+    });
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(2);
+});
+
+test("granularity 'year' renders a single year segment", () => {
+    renderField({
+        granularity: 'year',
+        placeholderValue: new CalendarDate(2000, 1, 1),
+    });
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(1);
+});
