@@ -20,10 +20,7 @@ const renderCalendar = (
                     aria-label={'Previous month'}
                 />
                 <Calendar.Heading />
-                <Calendar.NavButton
-                    slot={'next'}
-                    aria-label={'Next month'}
-                />
+                <Calendar.NavButton slot={'next'} aria-label={'Next month'} />
                 <Calendar.Grid weekdayStyle={'short'} />
             </Calendar.Root>
         </I18nProvider>,
@@ -116,7 +113,68 @@ test('range: focus falling into body does not commit an unfinished range, an ord
     fireEvent.focusOut(root, {relatedTarget: null});
     expect(onChange).not.toHaveBeenCalled();
 
-    const outsideButton = screen.getByRole('button', {name: 'outside calendar'});
+    const outsideButton = screen.getByRole('button', {
+        name: 'outside calendar',
+    });
     fireEvent.focusOut(root, {relatedTarget: outsideButton});
     expect(onChange).toHaveBeenCalledTimes(1);
+});
+
+const renderTwoMonths = (): ReturnType<typeof render> =>
+    render(
+        <I18nProvider locale={'fr-FR'}>
+            <Calendar.Root
+                aria-label={'Calendar'}
+                visibleDuration={{months: 2}}
+                pageBehavior={'single'}
+                defaultFocusedValue={new CalendarDate(2026, 7, 15)}
+            >
+                <Calendar.NavButton
+                    slot={'previous'}
+                    aria-label={'Previous month'}
+                />
+                <Calendar.Heading offset={{months: 0}} />
+                <Calendar.Heading offset={{months: 1}} />
+                <Calendar.NavButton slot={'next'} aria-label={'Next month'} />
+                <Calendar.Grid weekdayStyle={'short'} offset={{months: 0}} />
+                <Calendar.Grid weekdayStyle={'short'} offset={{months: 1}} />
+            </Calendar.Root>
+        </I18nProvider>,
+    );
+
+test('two visible months: a grid and a heading per month', () => {
+    renderTwoMonths();
+    expect(screen.getAllByRole('grid')).toHaveLength(2);
+    const headings = screen.getAllByRole('heading').map((h) => h.textContent);
+    expect(headings[0]).toMatch(/juillet 2026/i);
+    expect(headings[1]).toMatch(/août 2026/i);
+});
+
+test('two visible months: a neighbour month tail is data-outside-month in its grid', () => {
+    renderTwoMonths();
+    const [july, august] = screen.getAllByRole('grid');
+    // 1 July 2026 is Wednesday: the Monday and Tuesday before it belong to June
+    const julyOutside = july.querySelectorAll('[data-outside-month="true"]');
+    expect(julyOutside.length).toBeGreaterThanOrEqual(2);
+    expect(julyOutside[0].textContent).toBe('29');
+    // August 2026 starts on Saturday: 27-31 July lead the grid, all outside
+    const augustOutside = august.querySelectorAll(
+        '[data-outside-month="true"]',
+    );
+    expect(augustOutside[0].textContent).toBe('27');
+    // a day lives in exactly one grid as an in-month cell
+    const inMonth = (grid: HTMLElement): string[] =>
+        Array.from(
+            grid.querySelectorAll('td > div:not([data-outside-month="true"])'),
+        ).map((cell) => cell.textContent ?? '');
+    expect(inMonth(july)).toHaveLength(31);
+    expect(inMonth(august)).toHaveLength(31);
+});
+
+test('two visible months: next pages by one month', async () => {
+    renderTwoMonths();
+    await userEvent.click(screen.getByRole('button', {name: 'Next month'}));
+    const headings = screen.getAllByRole('heading').map((h) => h.textContent);
+    expect(headings[0]).toMatch(/août 2026/i);
+    expect(headings[1]).toMatch(/septembre 2026/i);
 });

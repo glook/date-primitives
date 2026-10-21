@@ -3,7 +3,7 @@
 // Calendar primitives: Root/RangeCalendar.Root own the state; the grid and the cells
 // read the context. A cell hangs state data attributes for the skin to style;
 // hover and focus-visible come to the skin from native :hover/:focus-visible.
-import {isSameDay} from '@internationalized/date';
+import {endOfMonth, isSameDay, isSameMonth} from '@internationalized/date';
 import {useButton} from '@react-aria/button';
 import {
     useCalendar,
@@ -11,7 +11,7 @@ import {
     useCalendarGrid,
     useRangeCalendar,
 } from '@react-aria/calendar';
-import {useLocale} from '@react-aria/i18n';
+import {useDateFormatter, useLocale} from '@react-aria/i18n';
 import {mergeProps} from '@react-aria/utils';
 import {useCalendarState, useRangeCalendarState} from '@react-stately/calendar';
 
@@ -21,8 +21,12 @@ import type {
     CalendarAria,
 } from '@react-aria/calendar';
 import type {DateValue} from '@react-aria/datepicker';
-import type {CalendarState, RangeCalendarState} from '@react-stately/calendar';
-import type {CalendarDate} from '@internationalized/date';
+import type {
+    CalendarState,
+    PageBehavior,
+    RangeCalendarState,
+} from '@react-stately/calendar';
+import type {CalendarDate, DateDuration} from '@internationalized/date';
 
 import React from 'react';
 
@@ -38,6 +42,11 @@ interface CalendarContextValue {
 
 const CalendarContext = React.createContext<CalendarContextValue | null>(null);
 
+// First date of the grid a cell belongs to, set only for grids with an offset: lets the
+// cell tell its own month from a neighbour month's tail when several grids share one
+// calendar state. A single grid keeps the neighbour days selectable.
+const GridStartContext = React.createContext<CalendarDate | null>(null);
+
 export const useCalendarContext = (): CalendarContextValue => {
     const context = React.useContext(CalendarContext);
     if (context == null) {
@@ -49,6 +58,10 @@ export const useCalendarContext = (): CalendarContextValue => {
 };
 
 export interface CalendarRootProps extends AriaCalendarProps<DateValue> {
+    /** How many months the state shows; render one Calendar.Grid per month with `offset`. */
+    visibleDuration?: DateDuration;
+    /** 'single' pages by one month even when several are visible. */
+    pageBehavior?: PageBehavior;
     className?: string;
     children?: React.ReactNode;
     createCalendar?: CreateCalendar;
@@ -84,6 +97,10 @@ const Root = (props: CalendarRootProps): React.ReactElement => {
 };
 
 export interface RangeCalendarRootProps extends AriaRangeCalendarProps<DateValue> {
+    /** See CalendarRootProps. */
+    visibleDuration?: DateDuration;
+    /** See CalendarRootProps. */
+    pageBehavior?: PageBehavior;
     className?: string;
     children?: React.ReactNode;
     createCalendar?: CreateCalendar;
@@ -130,11 +147,27 @@ const RangeRoot = (props: RangeCalendarRootProps): React.ReactElement => {
     );
 };
 
-const Heading = (
-    props: React.ComponentPropsWithoutRef<'h2'>,
-): React.ReactElement => {
-    const {calendar} = useCalendarContext();
-    return <h2 {...props}>{calendar.title}</h2>;
+export interface CalendarHeadingProps extends React.ComponentPropsWithoutRef<'h2'> {
+    /** Month of a multi-grid calendar this heading names, relative to the visible start. */
+    offset?: DateDuration;
+}
+
+const Heading = (props: CalendarHeadingProps): React.ReactElement => {
+    const {offset, ...restProps} = props;
+    const {calendar, state} = useCalendarContext();
+    const formatter = useDateFormatter({
+        month: 'long',
+        year: 'numeric',
+        calendar: state.visibleRange.start.calendar.identifier,
+        timeZone: state.timeZone,
+    });
+    const title =
+        offset == null
+            ? calendar.title
+            : formatter.format(
+                  state.visibleRange.start.add(offset).toDate(state.timeZone),
+              );
+    return <h2 {...restProps}>{title}</h2>;
 };
 
 export interface CalendarNavButtonProps extends React.ComponentPropsWithoutRef<'button'> {
@@ -182,6 +215,8 @@ export interface CalendarGridProps {
     headerCellClassName?: string;
     bodyClassName?: string;
     weekdayStyle?: 'narrow' | 'short' | 'long';
+    /** Month of this grid relative to the visible start; set it on every grid when several are shown. */
+    offset?: DateDuration;
     /** Cell renderer; defaults to <Calendar.Cell date={date} />. */
     renderCell?: (date: CalendarDate) => React.ReactElement;
 }
@@ -192,45 +227,57 @@ const Grid = (props: CalendarGridProps): React.ReactElement => {
         headerCellClassName,
         bodyClassName,
         weekdayStyle,
+        offset,
         renderCell,
     } = props;
     const {state} = useCalendarContext();
+    const startDate =
+        offset == null
+            ? state.visibleRange.start
+            : state.visibleRange.start.add(offset);
+    const endDate =
+        offset == null ? state.visibleRange.end : endOfMonth(startDate);
     const {gridProps, headerProps, weekDays, weeksInMonth} = useCalendarGrid(
-        {weekdayStyle},
+        {weekdayStyle, startDate, endDate},
         state,
     );
 
     return (
-        <table {...gridProps} className={className}>
-            <thead {...headerProps}>
-                <tr>
-                    {weekDays.map((day, index) => (
-                        <th key={String(index)} className={headerCellClassName}>
-                            {day}
-                        </th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody className={bodyClassName}>
-                {Array.from({length: weeksInMonth}, (unused, weekIndex) => (
-                    <tr key={String(weekIndex)}>
-                        {state
-                            .getDatesInWeek(weekIndex)
-                            .map((date, dayIndex) =>
-                                date != null ? (
-                                    <React.Fragment key={String(dayIndex)}>
-                                        {renderCell?.(date) ?? (
-                                            <Cell date={date} />
-                                        )}
-                                    </React.Fragment>
-                                ) : (
-                                    <td key={String(dayIndex)} />
-                                ),
-                            )}
+        <GridStartContext.Provider value={offset == null ? null : startDate}>
+            <table {...gridProps} className={className}>
+                <thead {...headerProps}>
+                    <tr>
+                        {weekDays.map((day, index) => (
+                            <th
+                                key={String(index)}
+                                className={headerCellClassName}
+                            >
+                                {day}
+                            </th>
+                        ))}
                     </tr>
-                ))}
-            </tbody>
-        </table>
+                </thead>
+                <tbody className={bodyClassName}>
+                    {Array.from({length: weeksInMonth}, (unused, weekIndex) => (
+                        <tr key={String(weekIndex)}>
+                            {state
+                                .getDatesInWeek(weekIndex, startDate)
+                                .map((date, dayIndex) =>
+                                    date != null ? (
+                                        <React.Fragment key={String(dayIndex)}>
+                                            {renderCell?.(date) ?? (
+                                                <Cell date={date} />
+                                            )}
+                                        </React.Fragment>
+                                    ) : (
+                                        <td key={String(dayIndex)} />
+                                    ),
+                                )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </GridStartContext.Provider>
     );
 };
 
@@ -242,6 +289,8 @@ export interface CalendarCellProps {
 const Cell = (props: CalendarCellProps): React.ReactElement => {
     const {date, className} = props;
     const {state} = useCalendarContext();
+    const gridStart = React.useContext(GridStartContext);
+    const isOutsideMonth = gridStart != null && !isSameMonth(date, gridStart);
     const ref = React.useRef<HTMLDivElement>(null!);
     const {
         cellProps,
@@ -251,7 +300,7 @@ const Cell = (props: CalendarCellProps): React.ReactElement => {
         isDisabled,
         isUnavailable,
         isOutsideVisibleRange,
-    } = useCalendarCell({date}, state, ref);
+    } = useCalendarCell({date, isOutsideMonth}, state, ref);
 
     const highlightedRange =
         'highlightedRange' in state ? state.highlightedRange : null;
@@ -271,7 +320,9 @@ const Cell = (props: CalendarCellProps): React.ReactElement => {
                 data-selection-end={isSelectionEnd || undefined}
                 data-disabled={isDisabled || undefined}
                 data-unavailable={isUnavailable || undefined}
-                data-outside-month={isOutsideVisibleRange || undefined}
+                data-outside-month={
+                    isOutsideMonth || isOutsideVisibleRange || undefined
+                }
             >
                 {formattedDate}
             </div>
